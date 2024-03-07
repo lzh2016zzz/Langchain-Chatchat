@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
-from configs.model_config import BING_SUBSCRIPTION_KEY
+from configs import BING_SUBSCRIPTION_KEY
 from server.utils import api_address
 
 from pprint import pprint
@@ -48,18 +48,6 @@ data = {
 }
 
 
-def test_chat_fastchat(api="/chat/fastchat"):
-    url = f"{api_base_url}{api}"
-    data2 = {
-        "stream": True,
-        "messages": data["history"] + [{"role": "user", "content": "推荐一部科幻电影"}]
-    }
-    dump_input(data2, api)
-    response = requests.post(url, headers=headers, json=data2, stream=True)
-    dump_output(response, api)
-    assert response.status_code == 200
-
-
 def test_chat_chat(api="/chat/chat"):
     url = f"{api_base_url}{api}"
     dump_input(data, api)
@@ -90,11 +78,11 @@ def test_knowledge_chat(api="/chat/knowledge_base_chat"):
     print("\n")
     print("=" * 30 + api + "  output" + "="*30)
     for line in response.iter_content(None, decode_unicode=True):
-        data = json.loads(line)
-        if "anser" in data:
+        data = json.loads(line[6:])
+        if "answer" in data:
             print(data["answer"], end="", flush=True)
+    pprint(data)
     assert "docs" in data and len(data["docs"]) > 0
-    pprint(data["docs"])
     assert response.status_code == 200
 
 
@@ -114,9 +102,9 @@ def test_search_engine_chat(api="/chat/search_engine_chat"):
             assert data["msg"] == f"要使用Bing搜索引擎，需要设置 `BING_SUBSCRIPTION_KEY`"
 
         print("\n")
-        print("=" * 30 + api + " by {se}  output" + "="*30)
+        print("=" * 30 + api + f" by {se}  output" + "="*30)
         for line in response.iter_content(None, decode_unicode=True):
-            data = json.loads(line)
+            data = json.loads(line[6:])
             if "answer" in data:
                 print(data["answer"], end="", flush=True)
         assert "docs" in data and len(data["docs"]) > 0

@@ -6,7 +6,7 @@ from pathlib import Path
 root_path = Path(__file__).parent.parent.parent
 sys.path.append(str(root_path))
 from server.utils import api_address
-from configs.model_config import VECTOR_SEARCH_TOP_K
+from configs import VECTOR_SEARCH_TOP_K
 from server.knowledge_base.utils import get_kb_path, get_file_path
 
 from pprint import pprint
@@ -17,9 +17,9 @@ api_base_url = api_address()
 
 kb = "kb_for_api_test"
 test_files = {
-    "FAQ.MD": str(root_path / "docs" / "FAQ.MD"),
-    "README.MD": str(root_path / "README.MD"),
-    "test.txt": get_file_path("samples", "test.txt"),
+    "wiki/Home.MD": get_file_path("samples", "wiki/Home.md"),
+    "wiki/开发环境部署.MD": get_file_path("samples", "wiki/开发环境部署.md"),
+    "test_files/test.txt": get_file_path("samples", "test_files/test.txt"),
 }
 
 print("\n\n直接url访问\n")
@@ -137,6 +137,14 @@ def test_search_docs(api="/knowledge_base/search_docs"):
     assert isinstance(data, list) and len(data) == VECTOR_SEARCH_TOP_K
 
 
+def test_update_info(api="/knowledge_base/update_info"):
+    url = api_base_url + api
+    print("\n更新知识库介绍")
+    r = requests.post(url, json={"knowledge_base_name": "samples", "kb_info": "你好"})
+    data = r.json()
+    pprint(data)
+    assert data["code"] == 200
+
 def test_update_docs(api="/knowledge_base/update_docs"):
     url = api_base_url + api
 
@@ -173,7 +181,7 @@ def test_recreate_vs(api="/knowledge_base/recreate_vector_store"):
     print("\n重建知识库：")
     r = requests.post(url, json={"knowledge_base_name": kb}, stream=True)
     for chunk in r.iter_content(None):
-        data = json.loads(chunk)
+        data = json.loads(chunk[6:])
         assert isinstance(data, dict)
         assert data["code"] == 200
         print(data["msg"])
